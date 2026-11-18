@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Кабінет студента: демонстрація</title>
+<meta name="description" content="Як зміни в розкладі потрапляють до календаря Moodle: таблиця, стрічка iCalendar і сім текстових статусів. Навчальний проєкт, дані вигадані.">
+<style>
+:root{
+  --bg:#f6f5f0; --card:#ffffff; --ink:#1b2220; --mute:#5a6560; --line:#dad8cf;
+  --accent:#0f6b54; --accent-ink:#ffffff; --soft:#e3f1ec; --amber:#8a5a00; --amber-bg:#fdf0d5;
+  --bad:#a3261c; --bad-bg:#fbe7e4; --info:#1f5a8a; --info-bg:#e3eef8;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#131715; --card:#1b201e; --ink:#e8ece9; --mute:#9aa7a0; --line:#2d3733;
+    --accent:#4cc2a0; --accent-ink:#0c1a15; --soft:#1e2e28; --amber:#f0c36a; --amber-bg:#33290f;
+    --bad:#ff8c80; --bad-bg:#3a1f1c; --info:#8cc2f0; --info-bg:#1b2c3a;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#131715; --card:#1b201e; --ink:#e8ece9; --mute:#9aa7a0; --line:#2d3733;
+  --accent:#4cc2a0; --accent-ink:#0c1a15; --soft:#1e2e28; --amber:#f0c36a; --amber-bg:#33290f;
+  --bad:#ff8c80; --bad-bg:#3a1f1c; --info:#8cc2f0; --info-bg:#1b2c3a;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:960px;margin:0 auto;padding:0 16px 72px}
+header{padding:40px 0 18px}
+.kicker{color:var(--accent);font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:.8rem}
+h1{font-size:2rem;line-height:1.15;margin:6px 0 10px}
+h2{font-size:1.35rem;margin:0 0 10px}
+h3{font-size:1.02rem;margin:16px 0 6px}
+p{margin:8px 0}
+.lead{color:var(--mute);max-width:66ch;font-size:1.05rem}
+nav{display:flex;flex-wrap:wrap;gap:8px;position:sticky;top:0;background:var(--bg);padding:10px 0;z-index:5;border-bottom:1px solid var(--line)}
+nav a{color:var(--ink);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:5px 13px;font-size:.9rem;background:var(--card)}
+nav a:hover,nav a:focus-visible{border-color:var(--accent);color:var(--accent)}
+section{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;margin:20px 0}
+a{color:var(--accent)}
+table{width:100%;border-collapse:collapse;font-size:.92rem;margin:8px 0}
+th,td{border-bottom:1px solid var(--line);padding:8px 8px;text-align:left;vertical-align:top}
+th{color:var(--mute);font-size:.78rem;text-transform:uppercase;letter-spacing:.04em}
+.tw{overflow-x:auto}
+code{background:var(--bg);padding:1px 6px;border-radius:5px;font-size:.9em}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(3,1fr)}
+@media (max-width:760px){.grid{grid-template-columns:1fr}}
+.pill{background:var(--soft);border-radius:12px;padding:14px}
+.pill b{display:block;margin-bottom:4px}
+.note{margin-top:12px;padding:10px 14px;border-radius:10px;background:var(--amber-bg);color:var(--amber);font-size:.92rem}
+.badge{display:inline-block;font-weight:700;font-size:.74rem;padding:1px 9px;border-radius:999px;border:1.5px solid currentColor;letter-spacing:.03em}
+.b-bad{color:var(--bad);background:var(--bad-bg)} .b-info{color:var(--info);background:var(--info-bg)} .b-ok{color:var(--accent);background:var(--soft)} .b-warn{color:var(--amber);background:var(--amber-bg)}
+svg text{font-family:inherit}
+.diagram{width:100%;height:auto;display:block}
+/* календар-макет */
+.cal{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.calh{background:var(--soft);padding:8px 12px;font-weight:700;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.ev{display:grid;grid-template-columns:96px 1fr;gap:10px;padding:10px 12px;border-top:1px solid var(--line)}
+.ev time{color:var(--mute);font-variant-numeric:tabular-nums}
+.ev .t{font-weight:600}
+.ev .d{color:var(--mute);font-size:.88rem}
+.ev.off .t{text-decoration:line-through;text-decoration-thickness:1.5px}
+.controls{display:grid;gap:12px;grid-template-columns:1fr 1fr;margin:10px 0}
+@media (max-width:640px){.controls{grid-template-columns:1fr}.ev{grid-template-columns:78px 1fr}}
+label{display:block;font-weight:600;font-size:.86rem;margin:0 0 4px}
+select,input[type=text]{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+select:focus-visible,input:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.legend{font-size:.88rem;color:var(--mute)}
+footer{color:var(--mute);font-size:.86rem;margin-top:26px}
+button.theme{font:inherit;cursor:pointer;background:none;border:none;color:var(--accent);text-decoration:underline;padding:0;margin-left:8px}
+.skip{position:absolute;left:-999px}.skip:focus{left:8px;top:8px;background:var(--card);padding:6px 10px;border-radius:8px;z-index:9}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Перейти до змісту</a>
+<div class="wrap">
+<header>
+  <div class="kicker">Smart Attic Team · навчальний проєкт</div>
+  <h1>Кабінет студента: зміни в розкладі доходять до календаря Moodle</h1>
+  <p class="lead">Студенти заочної форми навчання дізнаються про зміни з різних чатів і листів. Ми зібрали все в одну таблицю й показуємо це там, де студент уже дивиться: у календарі Moodle. Кожна зміна має текстовий статус, який видно без кольору й значків.</p>
+</header>
+
+<nav aria-label="Розділи">
+  <a href="#how">Як це працює</a>
+  <a href="#statuses">Сім статусів</a>
+  <a href="#try">Спробуй сам</a>
+  <a href="#a11y">Доступність</a>
+  <a href="#results">Результати й межі</a>
+  <a href="#sources">Джерела</a>
+</nav>
+
+<main id="main">
+
+<section id="how">
+  <h2>Як це працює</h2>
+  <p>Три частини, кожна робить одне. Староста змінює дані тільки в одному місці.</p>
+  <svg class="diagram" viewBox="0 0 900 230" role="img" aria-labelledby="dt dd">
+    <title id="dt">Схема: староста вносить зміну в таблицю, стрічка збирає календар, Moodle показує його студентові</title>
+    <desc id="dd">Староста пише рядок у таблицю. Скрипт формує стрічку iCalendar. Moodle опитує стрічку щогодини й показує події в календарі студента.</desc>
+    <defs><marker id="ar" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 z" fill="currentColor"/></marker></defs>
+    <g fill="none" stroke="currentColor" stroke-width="2" style="color:var(--mute)">
+      <path d="M205,115 H258" marker-end="url(#ar)"/><path d="M455,115 H508" marker-end="url(#ar)"/><path d="M705,115 H758" marker-end="url(#ar)"/>
+    </g>
+    <g font-size="15" text-anchor="middle" fill="currentColor" style="color:var(--ink)">
+      <rect x="10" y="55" width="195" height="120" rx="14" fill="var(--soft)" stroke="var(--accent)" stroke-width="2"/>
+      <text x="107" y="92" font-weight="700">1. Староста</text><text x="107" y="118">натискає кнопку</text><text x="107" y="140">на сторінці</text><text x="107" y="162" fill="var(--mute)" font-size="13">форма, не таблиця</text>
+      <rect x="260" y="55" width="195" height="120" rx="14" fill="var(--soft)" stroke="var(--accent)" stroke-width="2"/>
+      <text x="357" y="92" font-weight="700">2. Таблиця</text><text x="357" y="118">«Пари», «Тижні»,</text><text x="357" y="140">«Дзвінки», «Зміни»</text><text x="357" y="162" fill="var(--mute)" font-size="13">одна пам’ять</text>
+      <rect x="510" y="55" width="195" height="120" rx="14" fill="var(--soft)" stroke="var(--accent)" stroke-width="2"/>
+      <text x="607" y="92" font-weight="700">3. Стрічка</text><text x="607" y="118">скрипт збирає</text><text x="607" y="140">календар .ics щоразу</text><text x="607" y="162" fill="var(--mute)" font-size="13">завжди свіжий</text>
+      <rect x="760" y="55" width="130" height="120" rx="14" fill="var(--soft)" stroke="var(--accent)" stroke-width="2"/>
+      <text x="825" y="92" font-weight="700">4. Moodle</text><text x="825" y="118">опитує щогодини</text><text x="825" y="140">студент бачить</text><text x="825" y="162" fill="var(--mute)" font-size="13">події в календарі</text>
+    </g>
+  </svg>
+  <div class="grid">
+    <div class="pill"><b>Одне джерело</b>Зміна вноситься один раз. Не треба дублювати її в чатах і листах.</div>
+    <div class="pill"><b>Подія замінюється, а не дублюється</b>Кожна пара має сталий ідентифікатор: група, дата й номер пари.</div>
+    <div class="pill"><b>Нічого нового для студента</b>Окремий застосунок не потрібен: календар Moodle студент відкриває й так.</div>
+  </div>
+  <p class="note"><b>Приватність.</b> Є дві стрічки: відкрита (без посилань Zoom) і закрита ключем (із Zoom, лише для групи). Ключ не лежить у публічному коді.</p>
+</section>
+
+<section id="statuses">
+  <h2>Сім статусів</h2>
+  <p>Кожна зміна має один статус. Система перевіряє запис до збереження: статус має бути відомим, дата й номер пари вказані.</p>
+  <div class="tw"><table>
+    <thead><tr><th>Статус</th><th>Коли</th><th>Що обов’язково вказати</th><th>Як у назві події</th></tr></thead>
+    <tbody>
+      <tr><td><span class="badge b-bad">СКАСОВАНО</span></td><td>Пару не буде</td><td>Дата й номер пари</td><td><code>СКАСОВАНО — 3 пара — …</code></td></tr>
+      <tr><td><span class="badge b-info">ПЕРЕНЕСЕНО</span></td><td>Пара відбудеться в інший день</td><td>Нова дата й нова пара</td><td><code>ПЕРЕНЕСЕНО на 12.12, 2 пара — …</code></td></tr>
+      <tr><td><span class="badge b-info">ОНЛАЙН</span></td><td>Пара пройде дистанційно</td><td>Дата й номер пари</td><td><code>ОНЛАЙН — 2 пара — …</code></td></tr>
+      <tr><td><span class="badge b-warn">ЗМІНА</span></td><td>Змінилося щось в самій парі</td><td>Хоча б одне: дисципліна, викладач, час або Zoom</td><td><code>ЗМІНА — 4 пара — …</code> і блок «було»</td></tr>
+      <tr><td><span class="badge b-ok">ДОДАТКОВА</span></td><td>Пара, якої немає в розкладі</td><td>Дисципліна</td><td><code>ДОДАТКОВА — 5 пара — …</code></td></tr>
+      <tr><td><span class="badge b-warn">ОГОЛОШЕННЯ</span></td><td>Текст до пари</td><td>Текст оголошення</td><td><code>… (оголошення)</code>, текст зверху в описі</td></tr>
+      <tr><td><span class="badge b-ok">ЗМІНА ZOOM</span></td><td>Нове посилання на заняття</td><td>Посилання, що починається з https</td><td><code>… (нове посилання)</code></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="try">
+  <h2>Спробуй сам</h2>
+  <p>Обери статус і побачиш, як зміна виглядатиме в календарі Moodle. Дані вигадані: «Дисципліна А», «Викладач А».</p>
+  <div class="controls">
+    <div><label for="st">Статус</label>
+      <select id="st">
+        <option value="none">без змін</option>
+        <option value="СКАСОВАНО">СКАСОВАНО</option>
+        <option value="ПЕРЕНЕСЕНО">ПЕРЕНЕСЕНО</option>
+        <option value="ОНЛАЙН">ОНЛАЙН</option>
+        <option value="ЗМІНА">ЗМІНА</option>
+        <option value="ДОДАТКОВА">ДОДАТКОВА</option>
+        <option value="ОГОЛОШЕННЯ">ОГОЛОШЕННЯ</option>
+        <option value="ЗМІНА ZOOM">ЗМІНА ZOOM</option>
+      </select></div>
+    <div><label for="txt">Текст оголошення (для статусу ОГОЛОШЕННЯ)</label>
+      <input type="text" id="txt" value="Принесіть конспект" maxlength="80"></div>
+  </div>
+  <div class="cal" aria-live="polite">
+    <div class="calh"><span>Календар · четвер, 10 грудня</span><span class="legend">дані вигадані</span></div>
+    <div id="evs"></div>
+  </div>
+  <p class="legend">Зверни увагу: статус завжди написано словом на початку або в кінці назви. Колір і викреслення лише підсилюють його.</p>
+</section>
+
+<section id="a11y">
+  <h2>Доступність: що враховано</h2>
+  <ul>
+    <li><b>Не лише колір.</b> Статус виражено текстом у назві події. Це відповідає критерію WCAG 2.2 «Використання кольору» (1.4.1) [2].</li>
+    <li><b>Одне місце й одна структура.</b> Замість розрізнених повідомлень студент бачить однакові за формою записи в календарі: сприйнятність і зрозумілість (принципи WCAG) [2].</li>
+    <li><b>Кілька способів подання.</b> Подія в календарі й текстовий опис із часом, дисципліною й посиланням: узгоджується з принципом UDL про різні способи подання матеріалу [5].</li>
+    <li><b>Без окремого застосунку.</b> Не потрібно встановлювати чи вчити нове.</li>
+  </ul>
+  <p class="note"><b>Чого ми не робили.</b> Перевірки зчитувачем екрана й тестування зі студентами з інвалідністю ще не було. Доступність самого календаря Moodle (мобільна версія, зчитувачі екрана) проєкт не контролює.</p>
+</section>
+
+<section id="results">
+  <h2>Результати й межі</h2>
+  <ul>
+    <li>Прототип працює з 11.10.2026.</li>
+    <li>Перевірено на живому Moodle: 160 пар семестру потрапили до календаря без дублів; скасування, перенесення, додаткова пара й зміна викладача дійшли до стрічки.</li>
+    <li>Moodle опитує стрічку щогодини, тому зміна з’являється із затримкою до години.</li>
+    <li>Далі: перевірка зчитувачем екрана, опитування студентів, розширення переліку статусів.</li>
+  </ul>
+</section>
+
+<section id="sources">
+  <h2>Джерела</h2>
+  <ol>
+    <li>Національна стратегія безбар’єрного простору в Україні на період до 2030 року: розпорядження КМУ від 14 квітня 2021 р. № 366-р (у редакції від 25 березня 2025 р. № 294-р).</li>
+    <li>Web Content Accessibility Guidelines (WCAG) 2.2, W3C Recommendation, 5 жовтня 2023: <a href="https://www.w3.org/TR/2023/REC-WCAG22-20231005/">w3.org/TR/2023/REC-WCAG22-20231005</a>.</li>
+    <li>ДСТУ EN 301 549:2022. Інформаційні технології. Вимоги щодо доступності продуктів та послуг ІКТ.</li>
+    <li>Юрійчук А. О. Вебдоступність навчальних матеріалів: підходи та інструменти платформи Moodle. Наукові часописи Університету «Україна», серія 02, вип. 23(30), 2024. DOI: <a href="https://doi.org/10.31392/UDU-nc.series2.2024.23(30).13">10.31392/UDU-nc.series2.2024.23(30).13</a>.</li>
+    <li>Universal Design for Learning Guidelines version 3.0, CAST, 2024: <a href="https://udlguidelines.cast.org">udlguidelines.cast.org</a>.</li>
+  </ol>
+</section>
+
+</main>
+<footer>
+  Навчальний проєкт Smart Attic Team (Університет «Україна»). Дані на сторінці вигадані. Сторінка статична, нічого нікуди не надсилає.
+  <button class="theme" id="themeBtn" type="button">Змінити тему</button>
+</footer>
+</div>
+
+<script>
+(function(){
+  var $=function(i){return document.getElementById(i)};
+  var store={get:function(k){try{return localStorage.getItem(k)}catch(e){return null}},set:function(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+  var t=store.get('kd-theme'); if(t) document.documentElement.setAttribute('data-theme',t);
+  $('themeBtn').addEventListener('click',function(){
+    var cur=document.documentElement.getAttribute('data-theme');
+    var dark=cur?cur==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;
+    var next=dark?'light':'dark';
+    document.documentElement.setAttribute('data-theme',next); store.set('kd-theme',next);
+  });
+
+  var BASE=[
+    {pair:2,time:'10:00–11:20',disc:'Дисципліна А',kind:'лекція',teacher:'Викладач А'},
+    {pair:3,time:'11:40–13:00',disc:'Дисципліна Б',kind:'практична',teacher:'Викладач Б'},
+    {pair:5,time:'14:40–16:00',disc:'Дисципліна В',kind:'лекція',teacher:'Викладач В'}
+  ];
+  function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+  function ev(time,title,desc,off){
+    return '<div class="ev'+(off?' off':'')+'"><time>'+esc(time)+'</time><div><div class="t">'+esc(title)+'</div><div class="d">'+desc+'</div></div></div>';
+  }
+  function base(l){return esc(l.kind)+', '+esc(l.teacher)}
+  function render(){
+    var st=$('st').value, txt=$('txt').value.trim()||'Текст оголошення';
+    var out='';
+    BASE.forEach(function(l,i){
+      var title=l.pair+' пара — '+l.disc, desc=base(l), time=l.time, off=false;
+      var target=(i===1); // зміна стосується другої пари в списку (3 пара)
+      if(target && st!=='none'){
+        if(st==='СКАСОВАНО'){title='СКАСОВАНО — '+title;off=true}
+        else if(st==='ОНЛАЙН'){title='ОНЛАЙН — '+title}
+        else if(st==='ЗМІНА'){title='ЗМІНА — '+l.pair+' пара — '+l.disc;time='13:10–14:30';desc=esc(l.kind)+', Викладач Г<br><i>Було:</i> '+esc(l.time)+', '+esc(l.teacher)}
+        else if(st==='ОГОЛОШЕННЯ'){title=title+' (оголошення)';desc='<b>Оголошення:</b> '+esc(txt)+'<br>'+desc}
+        else if(st==='ЗМІНА ZOOM'){title=title+' (нове посилання)';desc=desc+'<br>Нове посилання на заняття додано в опис'}
+        else if(st==='ПЕРЕНЕСЕНО'){title='ПЕРЕНЕСЕНО на 12.12, 2 пара — '+l.disc;off=false}
+      }
+      out+=ev(time,title,desc,off);
+      if(target && st==='ПЕРЕНЕСЕНО'){}
+    });
+    if(st==='ДОДАТКОВА') out+=ev('16:10–17:30','ДОДАТКОВА — 6 пара — Консультація','додаткова пара, Викладач А');
+    $('evs').innerHTML=out;
+  }
+  $('st').addEventListener('change',render); $('txt').addEventListener('input',render); render();
+})();
+</script>
+</body>
+</html>
