@@ -67,6 +67,19 @@ label{display:block;font-weight:600;font-size:.86rem;margin:0 0 4px}
 select,input[type=text]{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
 select:focus-visible,input:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .legend{font-size:.88rem;color:var(--mute)}
+.steps{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+button.btn{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);padding:7px 14px}
+button.btn.ghost{background:transparent;color:var(--accent)}
+button.btn[disabled]{opacity:.45;cursor:default}
+.stepbox{margin-top:8px;padding:12px 14px;border-radius:10px;background:var(--soft);min-height:3.6em}
+.diagram rect.hl2{stroke:var(--amber);stroke-width:5px}
+.out{margin-top:10px;padding:12px 14px;border-radius:10px;font-weight:600}
+.out.ok{background:var(--soft);color:var(--accent)} .out.err{background:var(--bad-bg);color:var(--bad)}
+.fgrid{display:grid;gap:10px;grid-template-columns:repeat(3,1fr)}
+@media (max-width:760px){.fgrid{grid-template-columns:1fr}}
+.gray{filter:grayscale(1)}
+.toggle{display:inline-flex;align-items:center;gap:8px;margin:8px 0;font-weight:600}
+.toggle input{width:18px;height:18px;accent-color:var(--accent)}
 footer{color:var(--mute);font-size:.86rem;margin-top:26px}
 button.theme{font:inherit;cursor:pointer;background:none;border:none;color:var(--accent);text-decoration:underline;padding:0;margin-left:8px}
 .skip{position:absolute;left:-999px}.skip:focus{left:8px;top:8px;background:var(--card);padding:6px 10px;border-radius:8px;z-index:9}
@@ -84,7 +97,9 @@ button.theme{font:inherit;cursor:pointer;background:none;border:none;color:var(-
 <nav aria-label="Розділи">
   <a href="#how">Як це працює</a>
   <a href="#statuses">Сім статусів</a>
-  <a href="#try">Спробуй сам</a>
+  <a href="#path">Шлях зміни</a>
+  <a href="#try">Календар</a>
+  <a href="#check">Перевірка запису</a>
   <a href="#a11y">Доступність</a>
   <a href="#results">Результати й межі</a>
   <a href="#sources">Джерела</a>
@@ -103,13 +118,13 @@ button.theme{font:inherit;cursor:pointer;background:none;border:none;color:var(-
       <path d="M205,115 H258" marker-end="url(#ar)"/><path d="M455,115 H508" marker-end="url(#ar)"/><path d="M705,115 H758" marker-end="url(#ar)"/>
     </g>
     <g font-size="15" text-anchor="middle" fill="currentColor" style="color:var(--ink)">
-      <rect x="10" y="55" width="195" height="120" rx="14" fill="var(--soft)" stroke="var(--accent)" stroke-width="2"/>
+      <rect id="bx1" x="10" y="55" width="195" height="120" rx="14" fill="var(--soft)" stroke="var(--accent)" stroke-width="2"/>
       <text x="107" y="92" font-weight="700">1. Староста</text><text x="107" y="118">натискає кнопку</text><text x="107" y="140">на сторінці</text><text x="107" y="162" fill="var(--mute)" font-size="13">форма, не таблиця</text>
-      <rect x="260" y="55" width="195" height="120" rx="14" fill="var(--soft)" stroke="var(--accent)" stroke-width="2"/>
+      <rect id="bx2" x="260" y="55" width="195" height="120" rx="14" fill="var(--soft)" stroke="var(--accent)" stroke-width="2"/>
       <text x="357" y="92" font-weight="700">2. Таблиця</text><text x="357" y="118">«Пари», «Тижні»,</text><text x="357" y="140">«Дзвінки», «Зміни»</text><text x="357" y="162" fill="var(--mute)" font-size="13">одна пам’ять</text>
-      <rect x="510" y="55" width="195" height="120" rx="14" fill="var(--soft)" stroke="var(--accent)" stroke-width="2"/>
+      <rect id="bx3" x="510" y="55" width="195" height="120" rx="14" fill="var(--soft)" stroke="var(--accent)" stroke-width="2"/>
       <text x="607" y="92" font-weight="700">3. Стрічка</text><text x="607" y="118">скрипт збирає</text><text x="607" y="140">календар .ics щоразу</text><text x="607" y="162" fill="var(--mute)" font-size="13">завжди свіжий</text>
-      <rect x="760" y="55" width="130" height="120" rx="14" fill="var(--soft)" stroke="var(--accent)" stroke-width="2"/>
+      <rect id="bx4" x="760" y="55" width="130" height="120" rx="14" fill="var(--soft)" stroke="var(--accent)" stroke-width="2"/>
       <text x="825" y="92" font-weight="700">4. Moodle</text><text x="825" y="118">опитує щогодини</text><text x="825" y="140">студент бачить</text><text x="825" y="162" fill="var(--mute)" font-size="13">події в календарі</text>
     </g>
   </svg>
@@ -138,6 +153,18 @@ button.theme{font:inherit;cursor:pointer;background:none;border:none;color:var(-
   </table></div>
 </section>
 
+<section id="path">
+  <h2>Шлях однієї зміни</h2>
+  <p>Пройди шлях зміни крок за кроком: приклад зі скасованою парою. Схема вище підсвічується, а під нею пояснення.</p>
+  <div class="steps">
+    <button class="btn ghost" id="pPrev" type="button">Назад</button>
+    <button class="btn" id="pNext" type="button">Далі</button>
+    <button class="btn ghost" id="pReset" type="button">Спочатку</button>
+    <span class="legend" id="pCount" style="align-self:center"></span>
+  </div>
+  <div class="stepbox" id="pText" aria-live="polite"></div>
+</section>
+
 <section id="try">
   <h2>Спробуй сам</h2>
   <p>Обери статус і побачиш, як зміна виглядатиме в календарі Moodle. Дані вигадані: «Дисципліна А», «Викладач А».</p>
@@ -156,11 +183,32 @@ button.theme{font:inherit;cursor:pointer;background:none;border:none;color:var(-
     <div><label for="txt">Текст оголошення (для статусу ОГОЛОШЕННЯ)</label>
       <input type="text" id="txt" value="Принесіть конспект" maxlength="80"></div>
   </div>
-  <div class="cal" aria-live="polite">
+  <label class="toggle"><input type="checkbox" id="gray"> Показати без кольору (чорно-біле)</label>
+  <div class="cal" id="calbox" aria-live="polite">
     <div class="calh"><span>Календар · четвер, 10 грудня</span><span class="legend">дані вигадані</span></div>
     <div id="evs"></div>
   </div>
-  <p class="legend">Зверни увагу: статус завжди написано словом на початку або в кінці назви. Колір і викреслення лише підсилюють його.</p>
+  <p class="legend">Увімкни «без кольору»: статус залишається читабельним, бо написаний словом. Це і є критерій WCAG «Використання кольору» (1.4.1).</p>
+</section>
+
+<section id="check">
+  <h2>Перевірка запису: що відповість система</h2>
+  <p>Староста вносить зміну в таблицю «Зміни» тільки через форму. Скрипт перевіряє запис за тими самими правилами, що в коді проєкту, і повертає зрозуміле повідомлення. Заповни поля й натисни «Зберегти».</p>
+  <div class="fgrid">
+    <div><label for="f_status">Статус</label><select id="f_status"><option value="">(не обрано)</option><option>СКАСОВАНО</option><option>ПЕРЕНЕСЕНО</option><option>ОНЛАЙН</option><option>ЗМІНА</option><option>ДОДАТКОВА</option><option>ОГОЛОШЕННЯ</option><option>ЗМІНА ZOOM</option><option>ТЕСТ</option></select></div>
+    <div><label for="f_date">Дата (РРРР-ММ-ДД)</label><input type="text" id="f_date" placeholder="2026-12-10"></div>
+    <div><label for="f_pair">Номер пари</label><input type="text" id="f_pair" placeholder="3"></div>
+    <div><label for="f_nd">Нова дата (для ПЕРЕНЕСЕНО)</label><input type="text" id="f_nd" placeholder="2026-12-12"></div>
+    <div><label for="f_np">Нова пара (для ПЕРЕНЕСЕНО)</label><input type="text" id="f_np" placeholder="2"></div>
+    <div><label for="f_disc">Дисципліна</label><input type="text" id="f_disc"></div>
+    <div><label for="f_teacher">Викладач</label><input type="text" id="f_teacher"></div>
+    <div><label for="f_time">Час (11:40–13:00)</label><input type="text" id="f_time"></div>
+    <div><label for="f_zoom">Посилання Zoom</label><input type="text" id="f_zoom" placeholder="https://…"></div>
+  </div>
+  <div style="margin-top:10px"><label for="f_comment">Коментар або текст оголошення</label><input type="text" id="f_comment"></div>
+  <div class="steps"><button class="btn" id="f_go" type="button">Зберегти</button><button class="btn ghost" id="f_demo" type="button">Заповнити приклад із помилкою</button></div>
+  <div id="f_out" aria-live="polite"></div>
+  <p class="legend">Це макет: нічого нікуди не зберігається. Правила взято з функції збереження змін у коді проєкту.</p>
 </section>
 
 <section id="a11y">
@@ -245,6 +293,56 @@ button.theme{font:inherit;cursor:pointer;background:none;border:none;color:var(-
     $('evs').innerHTML=out;
   }
   $('st').addEventListener('change',render); $('txt').addEventListener('input',render); render();
+  /* шлях зміни */
+  var STEPS=[
+    {box:null,t:'Ситуація: на четвер, 3 пару, викладач не зможе провести заняття. Староста дізнається про це й хоче, щоб група побачила це в календарі.'},
+    {box:1,t:'Староста відкриває сторінку, обирає дату, пару й статус СКАСОВАНО. Він не редагує таблицю вручну.'},
+    {box:2,t:'Сторінка перевіряє запис і додає один рядок у таблицю «Зміни». Базовий розклад не чіпається: зміна лежить окремо й має дату.'},
+    {box:3,t:'Коли Moodle звертається за стрічкою, скрипт розкладає базовий розклад по датах, накладає «Зміни» і віддає календар. Готового файла немає, стрічка щоразу збирається наново.'},
+    {box:4,t:'Moodle опитує стрічку щогодини. Подія має той самий ідентифікатор, тому замінюється, а не дублюється: у календарі з’являється «СКАСОВАНО — 3 пара — …».'}
+  ];
+  var si=0;
+  function showStep(){
+    for(var b=1;b<=4;b++){var el=$('bx'+b); if(el) el.classList.toggle('hl2', STEPS[si].box===b);}
+    $('pText').textContent=STEPS[si].t;
+    $('pCount').textContent='Крок '+(si+1)+' з '+STEPS.length;
+    $('pPrev').disabled=si===0; $('pNext').disabled=si===STEPS.length-1;
+  }
+  $('pNext').addEventListener('click',function(){if(si<STEPS.length-1){si++;showStep()}});
+  $('pPrev').addEventListener('click',function(){if(si>0){si--;showStep()}});
+  $('pReset').addEventListener('click',function(){si=0;showStep()});
+  showStep();
+
+  /* без кольору */
+  $('gray').addEventListener('change',function(){$('calbox').classList.toggle('gray',this.checked)});
+
+  /* перевірка запису: ті самі правила, що в saveChange */
+  var STATUSES=['СКАСОВАНО','ПЕРЕНЕСЕНО','ОНЛАЙН','ЗМІНА','ДОДАТКОВА','ОГОЛОШЕННЯ','ЗМІНА ZOOM'];
+  var DATE_RE=/^\d{4}-\d{2}-\d{2}$/, TIME_RE=/^\d{1,2}:\d{2}\s*[–-]\s*\d{1,2}:\d{2}$/;
+  function v(i){return $(i).value.trim()}
+  function check(){
+    var c={status:v('f_status'),date:v('f_date'),pair:Number(v('f_pair')),nd:v('f_nd'),np:Number(v('f_np')),disc:v('f_disc'),teacher:v('f_teacher'),time:v('f_time'),zoom:v('f_zoom'),comment:v('f_comment')};
+    if(STATUSES.indexOf(c.status)<0) return 'Невідомий статус: '+(c.status||'(порожньо)');
+    if(!DATE_RE.test(c.date)||!(c.pair>0)) return 'Не вказано дату або пару';
+    if(c.zoom&&!/^https:\/\/\S+$/.test(c.zoom)) return 'Посилання Zoom має починатися з https://';
+    if(c.time&&!TIME_RE.test(c.time)) return 'Час — у вигляді 11:40–13:00';
+    if(c.status==='ПЕРЕНЕСЕНО'&&(!DATE_RE.test(c.nd)||!(c.np>0))) return 'Для перенесення вкажіть нову дату і пару';
+    if(c.status==='ЗМІНА'&&!(c.disc||c.teacher||c.time||c.zoom)) return 'Вкажіть, що саме змінилося: дисципліну, викладача, час або Zoom';
+    if(c.status==='ДОДАТКОВА'&&!c.disc) return 'Вкажіть дисципліну додаткової пари';
+    if(c.status==='ОГОЛОШЕННЯ'&&!c.comment) return 'Напишіть текст оголошення';
+    return null;
+  }
+  function go(){
+    var err=check(), o=$('f_out');
+    if(err){o.className='out err';o.textContent='Помилка: '+err+'. Запис не створено.'}
+    else{o.className='out ok';o.textContent='Збережено: один рядок у таблиці «Зміни». Стрічка врахує його при наступному зверненні Moodle.'}
+  }
+  $('f_go').addEventListener('click',go);
+  $('f_demo').addEventListener('click',function(){
+    $('f_status').value='ПЕРЕНЕСЕНО';$('f_date').value='2026-12-10';$('f_pair').value='3';$('f_nd').value='';$('f_np').value='';
+    $('f_disc').value='';$('f_teacher').value='';$('f_time').value='';$('f_zoom').value='';$('f_comment').value=''; go();
+  });
+
 })();
 </script>
 </body>
